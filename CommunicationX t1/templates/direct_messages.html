@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+
+{% block title %}Direct Messages - CommunicationX{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center">
+                <img src="{{ url_for('static', filename='images/CommunicationX.png') }}" alt="CommunicationX Logo" class="logo-small me-2">
+                <span class="fw-bold">CommunicationX</span>
+            </div>
+            <a href="{{ url_for('home') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </div>
+
+        <div class="dm-section">
+            <div class="section-header">
+                <h6>Direct Messages</h6>
+                <button class="btn btn-sm btn-primary" onclick="toggleNewDmModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="dm-list">
+                {% if conversations %}
+                    {% for user in conversations %}
+                    <div class="user-item {% if other_user and other_user.id == user.id %}active{% endif %}" 
+                         onclick="window.location.href='{{ url_for('dm_conversation', user_id=user.id) }}'">
+                        <div class="user-avatar">
+                            {% if user.profile_image_url %}
+                                <img src="{{ user.profile_image_url }}" alt="Profile">
+                            {% else %}
+                                <div class="avatar-placeholder">{{ (user.username or user.first_name or 'U')[0].upper() }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="user-info">
+                            <div class="username">{{ user.username or user.first_name or 'User' }}</div>
+                            <div class="user-status">{{ user.status or 'online' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-envelope"></i>
+                        <p>No conversations yet</p>
+                        <small>Start a new conversation!</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="sidebar-footer">
+            <a href="{{ url_for('profile') }}" class="nav-link">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
+            <a href="{{ url_for('voicemails') }}" class="nav-link">
+                <i class="fas fa-voicemail"></i> Voicemails
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-area">
+        {% if other_user %}
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-user-info">
+                    <div class="user-avatar">
+                        {% if other_user.profile_image_url %}
+                            <img src="{{ other_user.profile_image_url }}" alt="Profile">
+                        {% else %}
+                            <div class="avatar-placeholder">{{ (other_user.username or other_user.first_name or 'U')[0].upper() }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <h4>{{ other_user.username or other_user.first_name or 'User' }}</h4>
+                        <span class="status">{{ other_user.status or 'online' }}</span>
+                    </div>
+                </div>
+                
+                <div class="chat-actions">
+                    <a href="/call/{{ other_user.id }}/audio" class="btn btn-success">
+                        <i class="fas fa-phone"></i> Call
+                    </a>
+                    <a href="/call/{{ other_user.id }}/video" class="btn btn-primary">
+                        <i class="fas fa-video"></i> Video
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="messages-container" id="messagesContainer">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message {% if message.sender_id == current_user.id %}own{% endif %}">
+                        <div class="message-content">{{ message.content }}</div>
+                        <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-messages">
+                        <i class="fas fa-comments"></i>
+                        <p>No messages yet</p>
+                        <small>Start the conversation!</small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-container">
+                <form method="POST" action="{{ url_for('send_dm', user_id=other_user.id) }}" class="message-form">
+                    <div class="input-group">
+                        <input type="text" name="message" class="form-control" placeholder="Type a message..." required maxlength="2000">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <!-- Welcome Screen -->
+            <div class="welcome-screen">
+                <img src="{{ url_for('static', filename='images/CommunicationX.png') }}" alt="CommunicationX Logo" class="welcome-logo">
+                <h2>Welcome to Direct Messages</h2>
+                <p>Select a conversation from the sidebar or start a new one.</p>
+                <button class="btn btn-primary" onclick="toggleNewDmModal()">
+                    <i class="fas fa-plus"></i> Start New Conversation
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- New DM Modal -->
+<div id="newDmModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Start New Conversation</h3>
+            <button class="close-btn" onclick="toggleNewDmModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="user-search">
+                <input type="text" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+            </div>
+            <div class="users-list" id="usersList">
+                {% for user in all_users %}
+                <div class="user-option" onclick="startConversation('{{ user.id }}')">
+                    <div class="user-avatar">
+                        {% if user.profile_image_url %}
+                            <img src="{{ user.profile_image_url }}" alt="Profile">
+                        {% else %}
+                            <div class="avatar-placeholder">{{ (user.username or user.first_name or 'U')[0].upper() }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="user-info">
+                        <div class="username">{{ user.username or user.first_name or 'User' }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.main-container {
+    display: flex;
+    height: 100vh;
+    background: var(--primary-bg);
+}
+
+.sidebar {
+    width: 300px;
+    background: var(--secondary-bg);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-small {
+    width: 30px;
+    height: auto;
+    border-radius: 6px;
+}
+
+.dm-section {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.section-header {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header h6 {
+    margin: 0;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.user-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-item.active {
+    background: var(--accent-color);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    overflow: hidden;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.username {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.user-status {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-link {
+    display: block;
+    padding: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--secondary-bg);
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.chat-user-info .user-avatar {
+    width: 50px;
+    height: 50px;
+    margin-right: 1rem;
+}
+
+.user-details h4 {
+    margin: 0;
+    color: white;
+}
+
+.status {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.messages-container {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    background: var(--primary-bg);
+}
+
+.message {
+    margin-bottom: 1rem;
+    max-width: 70%;
+}
+
+.message.own {
+    margin-left: auto;
+}
+
+.message-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    color: white;
+    word-wrap: break-word;
+}
+
+.message.own .message-content {
+    background: var(--accent-color);
+}
+
+.message-time {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    text-align: right;
+}
+
+.message.own .message-time {
+    text-align: right;
+}
+
+.message-input-container {
+    padding: 1rem;
+    background: var(--secondary-bg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+}
+
+.input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 2rem;
+}
+
+.welcome-logo {
+    width: 100px;
+    height: auto;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+}
+
+.welcome-screen h2 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.welcome-screen p {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.empty-state, .no-messages {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i, .no-messages i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: white;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.user-search input {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.users-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.user-option {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.user-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-option .user-avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 0.75rem;
+}
+
+.user-email {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: absolute;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .content-area {
+        width: 100%;
+    }
+    
+    .message {
+        max-width: 85%;
+    }
+}
+</style>
+
+<script>
+function toggleNewDmModal() {
+    const modal = document.getElementById('newDmModal');
+    modal.classList.toggle('active');
+}
+
+function filterUsers() {
+    const search = document.getElementById('userSearch').value.toLowerCase();
+    const users = document.querySelectorAll('.user-option');
+    
+    users.forEach(user => {
+        const username = user.querySelector('.username').textContent.toLowerCase();
+        const email = user.querySelector('.user-email').textContent.toLowerCase();
+        
+        if (username.includes(search) || email.includes(search)) {
+            user.style.display = 'flex';
+        } else {
+            user.style.display = 'none';
+        }
+    });
+}
+
+function startConversation(userId) {
+    window.location.href = `/dm/${userId}`;
+}
+
+// Auto-scroll messages to bottom
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('newDmModal');
+    if (e.target === modal) {
+        toggleNewDmModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}CommunicationX - Home{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center">
+                <img src="{{ url_for('static', filename='assets/CommunicationX.png') }}" alt="Logo" class="logo-small me-2">
+                <span class="fw-bold">CommunicationX</span>
+            </div>
+            <div class="user-info">
+                {% if current_user.profile_image_url %}
+                    <img src="{{ current_user.profile_image_url }}" alt="Avatar" class="user-avatar">
+                {% else %}
+                    <div class="user-avatar">{{ current_user.first_name[0] if current_user.first_name else 'U' }}</div>
+                {% endif %}
+                <div class="user-name">{{ current_user.first_name or current_user.username or 'User' }}</div>
+            </div>
+        </div>
+
+        <div class="server-list">
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <h6 class="mb-0 text-secondary">Servers</h6>
+                <button class="btn btn-sm btn-primary" data-modal-target="createServerModal">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            {% if servers %}
+                {% for server in servers %}
+                <div class="server-item" onclick="window.location.href='{{ url_for('server_view', server_id=server.id) }}'">
+                    <div class="server-icon">{{ server.name[0].upper() }}</div>
+                    <div>
+                        <div class="server-name">{{ server.name }}</div>
+                        {% if server.description %}
+                            <small class="text-muted">{{ server.description[:30] }}...</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="empty-state-title">No servers yet</div>
+                    <div class="empty-state-text">Create your first server to get started</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-auto p-3 border-top">
+            <div class="user-actions mb-3">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="fas fa-user-circle"></i> Profile
+                </a>
+                <a href="{{ url_for('voicemails') }}" class="btn btn-outline-info w-100 mb-2">
+                    <i class="fas fa-voicemail"></i> Voicemails
+                </a>
+            </div>
+            <a href="{{ url_for('replit_auth.logout') }}" class="btn btn-secondary w-100">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <div class="content-header">
+            <h2 class="content-title">
+                <i class="fas fa-home"></i>
+                Welcome to CommunicationX
+            </h2>
+            <a href="{{ url_for('direct_messages') }}" class="dm-button">
+                <i class="fas fa-envelope"></i> DM
+            </a>
+        </div>
+
+        <div class="content-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="welcome-section">
+                        <h3>Getting Started</h3>
+                        <p class="text-secondary">Welcome to CommunicationX! Here's how to get started:</p>
+                        
+                        <div class="getting-started-cards">
+                            <div class="card bg-dark border-secondary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-server text-primary"></i>
+                                        Create a Server
+                                    </h5>
+                                    <p class="card-text">Create a server to organize your conversations by team or project.</p>
+                                    <button class="btn btn-primary btn-sm" data-modal-target="createServerModal">
+                                        Create Server
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card bg-dark border-secondary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-envelope text-success"></i>
+                                        Direct Messages
+                                    </h5>
+                                    <p class="card-text">Send direct messages to other users or start voice/video calls.</p>
+                                    <a href="{{ url_for('direct_messages') }}" class="btn btn-success btn-sm">
+                                        Open DMs
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="card bg-dark border-secondary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-user-plus text-info"></i>
+                                        Invite Friends
+                                    </h5>
+                                    <p class="card-text">Invite your friends to join CommunicationX and start chatting together.</p>
+                                    <button class="btn btn-info btn-sm" onclick="openModal('inviteFriendsModal')">
+                                        Create Invitation
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card bg-dark border-secondary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-users text-warning"></i>
+                                        Invite Friends
+                                    </h5>
+                                    <p class="card-text">Share your server with friends and colleagues to start collaborating.</p>
+                                    <button class="btn btn-warning btn-sm" disabled>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="quick-stats">
+                        <h4>Quick Stats</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ servers|length }}</div>
+                                <div class="stat-label">Servers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Messages Today</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">Online</div>
+                                <div class="stat-label">Status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Create Server Modal -->
+<div class="modal" id="createServerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Create Server</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('create_server') }}">
+            <div class="form-group">
+                <label class="form-label">Server Name</label>
+                <input type="text" name="server_name" class="form-input" required placeholder="Enter server name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description (Optional)</label>
+                <textarea name="server_description" class="form-input" rows="3" placeholder="Describe your server"></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn-primary">Create Server</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.getting-started-cards .card {
+    transition: transform 0.2s ease;
+}
+
+.getting-started-cards .card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background-color: rgb(var(--secondary-bg));
+    border-radius: 8px;
+    border: 1px solid rgb(var(--accent-bg));
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: rgb(var(--accent-color));
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: rgb(var(--text-muted));
+    text-transform: uppercase;
+}
+
+.welcome-section h3 {
+    color: rgb(var(--text-primary));
+    margin-bottom: 1rem;
+}
+
+.quick-stats {
+    background-color: rgb(var(--secondary-bg));
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--accent-bg));
+}
+
+.quick-stats h4 {
+    color: rgb(var(--text-primary));
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}

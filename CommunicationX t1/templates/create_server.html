@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Create Server - CommunicationX{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="content">
+        <div class="form-container">
+            <div class="form-header">
+                <img src="{{ url_for('static', filename='images/CommunicationX.png') }}" alt="CommunicationX Logo" class="form-logo">
+                <h1>Create New Server</h1>
+                <p>Build your communication hub</p>
+            </div>
+            
+            <form method="POST" class="server-form">
+                <div class="form-group">
+                    <label for="name">Server Name *</label>
+                    <input type="text" id="name" name="name" required 
+                           placeholder="Enter server name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3" 
+                              placeholder="Describe your server..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="logo_url">Server Logo URL</label>
+                    <input type="url" id="logo_url" name="logo_url" 
+                           placeholder="https://example.com/logo.png">
+                    <small class="form-help">Add a custom logo for your server</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="is_public" name="is_public" checked>
+                        <label for="is_public">Public Server</label>
+                        <small class="form-help">All CommunicationX users will automatically join this server</small>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Server
+                    </button>
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.server-form {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 12px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: white;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: auto;
+    margin-top: 0.25rem;
+}
+
+.checkbox-container label {
+    margin-bottom: 0;
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
